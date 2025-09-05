@@ -14,7 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      doses: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          medication_id: string
+          timestamp: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          medication_id: string
+          timestamp?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          medication_id?: string
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doses_medication_id_fkey"
+            columns: ["medication_id"]
+            isOneToOne: false
+            referencedRelation: "medications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medications: {
+        Row: {
+          color: string
+          created_at: string
+          half_life: number
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          half_life: number
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          half_life?: number
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
