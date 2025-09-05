@@ -30,10 +30,10 @@ const calculateConcentration = (initialAmount: number, halfLife: number, timeEla
   return initialAmount * Math.exp(-lambda * timeElapsed);
 };
 
-type TimeRangePreset = 'day' | 'week' | 'month' | 'custom' | 'default';
+type TimeRangePreset = 'day' | 'week' | 'month' | 'custom';
 
 export const ConcentrationChart = ({ products, quantities }: ConcentrationChartProps) => {
-  const [timeRange, setTimeRange] = useState<TimeRangePreset>('default');
+  const [timeRange, setTimeRange] = useState<TimeRangePreset>('week');
   const [customStartDate, setCustomStartDate] = useState<Date>();
   const [customEndDate, setCustomEndDate] = useState<Date>();
   const [customStartTime, setCustomStartTime] = useState('00:00');
@@ -73,12 +73,12 @@ export const ConcentrationChart = ({ products, quantities }: ConcentrationChartP
           
           return { start, end };
         }
-        // Fallback to default if custom dates not set
+        // Fallback to week if custom dates not set
         return {
           start: new Date(now.getTime() - 3.5 * 24 * 60 * 60 * 1000),
           end: new Date(now.getTime() + 3.5 * 24 * 60 * 60 * 1000)
         };
-      default: // 'default'
+      default:
         return {
           start: new Date(now.getTime() - 3.5 * 24 * 60 * 60 * 1000), // 3.5 days ago
           end: new Date(now.getTime() + 3.5 * 24 * 60 * 60 * 1000)   // 3.5 days ahead
@@ -204,13 +204,6 @@ export const ConcentrationChart = ({ products, quantities }: ConcentrationChartP
               onClick={() => setTimeRange('month')}
             >
               1 Mes
-            </Button>
-            <Button
-              variant={timeRange === 'default' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setTimeRange('default')}
-            >
-              Por Defecto (3.5 días)
             </Button>
             <Button
               variant={timeRange === 'custom' ? 'default' : 'outline'}
