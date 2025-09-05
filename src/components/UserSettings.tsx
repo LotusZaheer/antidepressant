@@ -61,29 +61,34 @@ export const UserSettings = ({ canEdit }: UserSettingsProps) => {
 
     setIsChanging(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    const success = changePassword(newPassword);
-    
-    if (success) {
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+    try {
+      const { error } = await changePassword(newPassword);
       
-      toast({
-        title: "Contraseña actualizada",
-        description: "Tu contraseña ha sido cambiada exitosamente",
-      });
-    } else {
+      if (error) {
+        toast({
+          title: "Error al cambiar contraseña",
+          description: error,
+          variant: "destructive",
+        });
+      } else {
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        
+        toast({
+          title: "Contraseña actualizada",
+          description: "Tu contraseña ha sido cambiada exitosamente",
+        });
+      }
+    } catch (error) {
       toast({
         title: "Error al cambiar contraseña",
-        description: "No se pudo cambiar la contraseña. Inténtalo de nuevo.",
+        description: "Error al conectar con el servidor",
         variant: "destructive",
       });
+    } finally {
+      setIsChanging(false);
     }
-
-    setIsChanging(false);
   };
 
   return (

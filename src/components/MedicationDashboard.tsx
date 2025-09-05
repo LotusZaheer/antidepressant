@@ -28,7 +28,7 @@ export interface Dose {
 
 
 export const MedicationDashboard = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const [medications, setMedications] = useState<Medication[]>([]);
   const [doses, setDoses] = useState<Dose[]>([]);
   const [activeTab, setActiveTab] = useState('chart');
@@ -137,6 +137,19 @@ export const MedicationDashboard = () => {
 
     setDoses(prev => [newDose, ...prev]);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center mx-auto mb-4">
+            <Pill className="h-6 w-6 text-white animate-pulse" />
+          </div>
+          <p className="text-muted-foreground">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

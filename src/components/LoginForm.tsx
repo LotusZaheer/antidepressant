@@ -23,26 +23,31 @@ export const LoginForm = ({ onClose }: LoginFormProps) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate loading delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    const success = login(email, password);
-    
-    if (success) {
-      toast({
-        title: "Login exitoso",
-        description: "Bienvenido al sistema de medicamentos",
-      });
-      onClose?.();
-    } else {
+    try {
+      const { error } = await login(email, password);
+      
+      if (error) {
+        toast({
+          title: "Error de autenticación",
+          description: error,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Login exitoso",
+          description: "Bienvenido al sistema de medicamentos",
+        });
+        onClose?.();
+      }
+    } catch (error) {
       toast({
         title: "Error de autenticación",
-        description: "Email o contraseña incorrectos",
+        description: "Error al conectar con el servidor",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   return (
