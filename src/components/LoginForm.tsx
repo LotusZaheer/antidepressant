@@ -7,7 +7,11 @@ import { useAuth } from './AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { LogIn, Eye, EyeOff } from 'lucide-react';
 
-export const LoginForm = () => {
+interface LoginFormProps {
+  onClose?: () => void;
+}
+
+export const LoginForm = ({ onClose }: LoginFormProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -29,6 +33,7 @@ export const LoginForm = () => {
         title: "Login exitoso",
         description: "Bienvenido al sistema de medicamentos",
       });
+      onClose?.();
     } else {
       toast({
         title: "Error de autenticación",
@@ -40,16 +45,8 @@ export const LoginForm = () => {
     setIsLoading(false);
   };
 
-  const handleViewOnlyAccess = () => {
-    // In a real app, this would create a guest session
-    toast({
-      title: "Acceso como visitante",
-      description: "Puedes ver los datos pero no editarlos",
-    });
-  };
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-accent to-background p-4">
+    <div className={onClose ? "" : "min-h-screen flex items-center justify-center bg-gradient-to-br from-accent to-background p-4"}>
       <Card className="w-full max-w-md shadow-medical">
         <CardHeader className="text-center">
           <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-gradient-primary flex items-center justify-center">
@@ -103,17 +100,6 @@ export const LoginForm = () => {
               {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
             </Button>
           </form>
-          
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground mb-2">¿Solo quieres ver los datos?</p>
-            <Button 
-              variant="outline" 
-              className="w-full"
-              onClick={handleViewOnlyAccess}
-            >
-              Acceso como Visitante
-            </Button>
-          </div>
         </CardContent>
       </Card>
     </div>
