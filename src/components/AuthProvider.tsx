@@ -17,6 +17,7 @@ interface AuthUser {
 interface AuthContextType {
   user: AuthUser | null;
   login: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: string | null }>;
   logout: () => Promise<void>;
   changePassword: (newPassword: string) => Promise<{ error: string | null }>;
   loading: boolean;
@@ -37,30 +38,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (profile) {
+        setUser({
+          email: profile.email,
+          canEdit: profile.can_edit
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         setSession(session);
         
         if (session?.user) {
-          // Fetch user profile
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (profile) {
-            setUser({
-              email: profile.email,
-              canEdit: profile.can_edit
-            });
-          }
+          // Defer async operations to prevent deadlock
+          setTimeout(() => {
+            fetchUserProfile(session.user.id);
+          }, 0);
         } else {
           setUser(null);
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
@@ -68,21 +81,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
-        // Fetch user profile for existing session
-        supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
-          .then(({ data: profile }) => {
-            if (profile) {
-              setUser({
-                email: profile.email,
-                canEdit: profile.can_edit
-              });
-            }
-            setLoading(false);
-          });
+        // Use the same function for consistency
+        fetchUserProfile(session.user.id);
       } else {
         setLoading(false);
       }
@@ -90,6 +90,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const signUp = async (email: string, password: string): Promise<{ error: string | null }> => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`
+      }
+    });
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    return { error: null };
+  };
 
   const login = async (email: string, password: string): Promise<{ error: string | null }> => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -125,7 +141,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, changePassword, loading }}>
+    <AuthContext.Provider value={{ user, signUp, login, logout, changePassword, loading }}>
       {children}
     </AuthContext.Provider>
   );
