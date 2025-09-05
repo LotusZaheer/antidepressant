@@ -191,21 +191,22 @@ export const ConcentrationChart = ({ products, quantities }: ConcentrationChartP
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Time Range Controls */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center space-x-2 text-base">
-            <Settings className="h-4 w-4" />
+          <CardTitle className="flex items-center space-x-2 text-sm sm:text-base">
+            <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
             <span>Rango de Tiempo</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-2">
+        <CardContent className="space-y-3 sm:space-y-4">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
             <Button
               variant={timeRange === 'day' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setTimeRange('day')}
+              className="text-xs sm:text-sm"
             >
               1 Día
             </Button>
@@ -213,6 +214,7 @@ export const ConcentrationChart = ({ products, quantities }: ConcentrationChartP
               variant={timeRange === 'week' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setTimeRange('week')}
+              className="text-xs sm:text-sm"
             >
               1 Semana
             </Button>
@@ -220,6 +222,7 @@ export const ConcentrationChart = ({ products, quantities }: ConcentrationChartP
               variant={timeRange === 'month' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setTimeRange('month')}
+              className="text-xs sm:text-sm"
             >
               1 Mes
             </Button>
@@ -227,86 +230,89 @@ export const ConcentrationChart = ({ products, quantities }: ConcentrationChartP
               variant={timeRange === 'custom' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setTimeRange('custom')}
+              className="text-xs sm:text-sm"
             >
               Personalizado
             </Button>
           </div>
 
           {timeRange === 'custom' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/30">
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Fecha y Hora de Inicio</Label>
-                <div className="flex gap-2">
-                  <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "justify-start text-left font-normal flex-1",
-                          !customStartDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {customStartDate ? format(customStartDate, "PPP") : "Seleccionar fecha"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={customStartDate}
-                        onSelect={(date) => {
-                          setCustomStartDate(date);
-                          setStartDateOpen(false);
-                        }}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <Input
-                    type="time"
-                    value={customStartTime}
-                    onChange={(e) => setCustomStartTime(e.target.value)}
-                    className="w-32"
-                  />
+            <div className="space-y-4 p-3 sm:p-4 border rounded-lg bg-muted/30">
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <Label className="text-xs sm:text-sm font-medium">Fecha y Hora de Inicio</Label>
+                  <div className="space-y-2 sm:space-y-0 sm:flex sm:gap-2">
+                    <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "justify-start text-left font-normal w-full sm:flex-1 text-xs sm:text-sm",
+                            !customStartDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                          {customStartDate ? format(customStartDate, "PPP") : "Seleccionar fecha"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={customStartDate}
+                          onSelect={(date) => {
+                            setCustomStartDate(date);
+                            setStartDateOpen(false);
+                          }}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <Input
+                      type="time"
+                      value={customStartTime}
+                      onChange={(e) => setCustomStartTime(e.target.value)}
+                      className="w-full sm:w-32 text-xs sm:text-sm"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Fecha y Hora de Fin</Label>
-                <div className="flex gap-2">
-                  <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "justify-start text-left font-normal flex-1",
-                          !customEndDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {customEndDate ? format(customEndDate, "PPP") : "Seleccionar fecha"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={customEndDate}
-                        onSelect={(date) => {
-                          setCustomEndDate(date);
-                          setEndDateOpen(false);
-                        }}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <Input
-                    type="time"
-                    value={customEndTime}
-                    onChange={(e) => setCustomEndTime(e.target.value)}
-                    className="w-32"
-                  />
+                <div className="space-y-3">
+                  <Label className="text-xs sm:text-sm font-medium">Fecha y Hora de Fin</Label>
+                  <div className="space-y-2 sm:space-y-0 sm:flex sm:gap-2">
+                    <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "justify-start text-left font-normal w-full sm:flex-1 text-xs sm:text-sm",
+                            !customEndDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                          {customEndDate ? format(customEndDate, "PPP") : "Seleccionar fecha"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={customEndDate}
+                          onSelect={(date) => {
+                            setCustomEndDate(date);
+                            setEndDateOpen(false);
+                          }}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <Input
+                      type="time"
+                      value={customEndTime}
+                      onChange={(e) => setCustomEndTime(e.target.value)}
+                      className="w-full sm:w-32 text-xs sm:text-sm"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -315,9 +321,9 @@ export const ConcentrationChart = ({ products, quantities }: ConcentrationChartP
       </Card>
 
       {/* Product Legend */}
-      <div className="space-y-2">
-        <h4 className="text-sm font-medium">Productos (Click para mostrar/ocultar)</h4>
-        <div className="flex flex-wrap gap-2">
+      <div className="space-y-2 sm:space-y-3">
+        <h4 className="text-xs sm:text-sm font-medium px-1">Productos (Toca para mostrar/ocultar)</h4>
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           {products.map(product => {
             const productQuantities = quantities.filter(q => q.productId === product.id);
             const totalQuantities = productQuantities.length;
@@ -329,18 +335,21 @@ export const ConcentrationChart = ({ products, quantities }: ConcentrationChartP
                 key={product.id} 
                 variant={isVisible ? "default" : "secondary"} 
                 className={cn(
-                  "flex items-center space-x-2 px-3 py-2 cursor-pointer transition-all",
+                  "flex items-center space-x-1.5 sm:space-x-2 px-2 sm:px-3 py-1.5 sm:py-2 cursor-pointer transition-all text-xs sm:text-sm",
                   !isVisible && "opacity-50"
                 )}
                 onClick={() => toggleProductVisibility(product.id)}
               >
                 <div
-                  className="w-3 h-3 rounded-full"
+                  className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0"
                   style={{ backgroundColor: isVisible ? product.color : '#888' }}
                 />
-                <span className="font-medium">{product.name}</span>
-                <span className="text-xs opacity-75">
-                  ({totalQuantities} cantidades, {totalAmount}mg total)
+                <span className="font-medium truncate max-w-20 sm:max-w-none">{product.name}</span>
+                <span className="text-xs opacity-75 hidden sm:inline whitespace-nowrap">
+                  ({totalQuantities} cantidades, {totalAmount}mg)
+                </span>
+                <span className="text-xs opacity-75 sm:hidden whitespace-nowrap">
+                  ({totalQuantities})
                 </span>
               </Badge>
             );
@@ -349,27 +358,36 @@ export const ConcentrationChart = ({ products, quantities }: ConcentrationChartP
       </div>
 
       {/* Chart */}
-      <div className="h-96">
+      <div className="h-64 sm:h-80 lg:h-96 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={chartData}
             margin={{
               top: 5,
-              right: 30,
-              left: 20,
+              right: 10,
+              left: 10,
               bottom: 25,
             }}
           >
             <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
             <XAxis 
               dataKey="timeLabel" 
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 10 }}
               tickFormatter={formatXAxisLabel}
               interval="preserveStartEnd"
+              angle={-45}
+              textAnchor="end"
+              height={60}
             />
             <YAxis 
-              tick={{ fontSize: 12 }}
-              label={{ value: 'Concentración (mg)', angle: -90, position: 'insideLeft' }}
+              tick={{ fontSize: 10 }}
+              label={{ 
+                value: 'Concentración (mg)', 
+                angle: -90, 
+                position: 'insideLeft',
+                style: { fontSize: '10px' }
+              }}
+              width={50}
             />
             <Tooltip 
               formatter={formatTooltip}
@@ -378,10 +396,14 @@ export const ConcentrationChart = ({ products, quantities }: ConcentrationChartP
                 backgroundColor: 'hsl(var(--card))',
                 border: '1px solid hsl(var(--border))',
                 borderRadius: '6px',
-                color: 'hsl(var(--card-foreground))'
+                color: 'hsl(var(--card-foreground))',
+                fontSize: '12px'
               }}
             />
-            <Legend />
+            <Legend 
+              wrapperStyle={{ fontSize: '11px' }}
+              iconType="line"
+            />
             {products.filter(product => visibleProducts.has(product.id)).map(product => (
               <Line
                 key={product.id}
@@ -389,8 +411,8 @@ export const ConcentrationChart = ({ products, quantities }: ConcentrationChartP
                 dataKey={product.id}
                 stroke={product.color}
                 strokeWidth={2}
-                dot={{ fill: product.color, strokeWidth: 0, r: 3 }}
-                activeDot={{ r: 5, stroke: product.color, strokeWidth: 2 }}
+                dot={{ fill: product.color, strokeWidth: 0, r: 2 }}
+                activeDot={{ r: 4, stroke: product.color, strokeWidth: 2 }}
                 name={product.name}
               />
             ))}
@@ -401,13 +423,13 @@ export const ConcentrationChart = ({ products, quantities }: ConcentrationChartP
       {/* Information Card */}
       <Card className="bg-muted/30">
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center space-x-2 text-base">
-            <Info className="h-4 w-4" />
+          <CardTitle className="flex items-center space-x-2 text-sm sm:text-base">
+            <Info className="h-3 w-3 sm:h-4 sm:w-4" />
             <span>Información del Cálculo</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
-          <CardDescription>
+          <CardDescription className="text-xs sm:text-sm">
             Este gráfico muestra la concentración estimada de productos en el cuerpo basada en el modelo de vida media. 
             Los cálculos utilizan una función exponencial de decaimiento: C(t) = C₀ × e^(-λt), donde λ = ln(2)/t½. 
             El rango por defecto muestra 3.5 días hacia atrás y 3.5 días hacia adelante desde el momento actual.

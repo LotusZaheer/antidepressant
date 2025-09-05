@@ -120,23 +120,23 @@ export const ProductRegistry = ({ products, onAddProduct, onUpdateProduct, canEd
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {canEdit && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Plus className="h-5 w-5" />
+            <CardTitle className="flex items-center space-x-2 text-sm sm:text-base">
+              <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
               <span>Agregar Producto</span>
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-xs sm:text-sm">
               Registra un nuevo producto con su vida media correspondiente.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nombre del Producto</Label>
+                  <Label htmlFor="name" className="text-xs sm:text-sm">Nombre del Producto</Label>
                   <Input
                     id="name"
                     type="text"
@@ -144,11 +144,12 @@ export const ProductRegistry = ({ products, onAddProduct, onUpdateProduct, canEd
                     onChange={(e) => setName(e.target.value)}
                     placeholder="ej. Paracetamol"
                     disabled={isSubmitting}
+                    className="text-sm"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="halfLife">Vida Media (horas)</Label>
+                  <Label htmlFor="halfLife" className="text-xs sm:text-sm">Vida Media (horas)</Label>
                   <Input
                     id="halfLife"
                     type="number"
@@ -158,11 +159,12 @@ export const ProductRegistry = ({ products, onAddProduct, onUpdateProduct, canEd
                     onChange={(e) => setHalfLife(e.target.value)}
                     placeholder="ej. 4.5"
                     disabled={isSubmitting}
+                    className="text-sm"
                   />
                 </div>
               </div>
 
-              <Button type="submit" disabled={isSubmitting} className="w-full">
+              <Button type="submit" disabled={isSubmitting} className="w-full text-sm">
                 {isSubmitting ? 'Agregando...' : 'Agregar Producto'}
               </Button>
             </form>
@@ -173,8 +175,8 @@ export const ProductRegistry = ({ products, onAddProduct, onUpdateProduct, canEd
       {!canEdit && (
         <Card>
           <CardHeader>
-            <CardTitle>Acceso de Solo Lectura</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-sm sm:text-base">Acceso de Solo Lectura</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
               Actualmente tienes acceso de solo lectura. Contacta al administrador para obtener permisos de edición.
             </CardDescription>
           </CardHeader>
@@ -183,34 +185,34 @@ export const ProductRegistry = ({ products, onAddProduct, onUpdateProduct, canEd
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Package className="h-5 w-5" />
+          <CardTitle className="flex items-center space-x-2 text-sm sm:text-base">
+            <Package className="h-4 w-4 sm:h-5 sm:w-5" />
             <span>Productos Registrados</span>
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-xs sm:text-sm">
             {products.length === 0 ? 'No hay productos registrados aún.' : `${products.length} producto${products.length !== 1 ? 's' : ''} registrado${products.length !== 1 ? 's' : ''}.`}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {products.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Agrega tu primer producto para comenzar el seguimiento.</p>
+            <div className="text-center py-6 sm:py-8 text-muted-foreground">
+              <Package className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4 opacity-50" />
+              <p className="text-sm">Agrega tu primer producto para comenzar el seguimiento.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {products.map((product) => (
                 <div
                   key={product.id}
-                  className="p-4 border rounded-lg space-y-3 hover:shadow-md transition-shadow"
+                  className="p-3 sm:p-4 border rounded-lg space-y-2 sm:space-y-3 hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 min-w-0 flex-1">
                       <div
-                        className="w-3 h-3 rounded-full"
+                        className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0"
                         style={{ backgroundColor: product.color }}
                       />
-                      <h3 className="font-medium">{product.name}</h3>
+                      <h3 className="font-medium text-sm sm:text-base truncate">{product.name}</h3>
                     </div>
                     {canEdit && (
                       <Dialog open={colorDialogOpen && selectedProduct?.id === product.id} onOpenChange={(open) => {
@@ -222,20 +224,20 @@ export const ProductRegistry = ({ products, onAddProduct, onUpdateProduct, canEd
                             variant="ghost"
                             size="sm"
                             onClick={() => setSelectedProduct(product)}
-                            className="h-6 w-6 p-0"
+                            className="h-5 w-5 sm:h-6 sm:w-6 p-0 flex-shrink-0"
                           >
-                            <Palette className="h-3 w-3" />
+                            <Palette className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
+                        <DialogContent className="sm:max-w-md mx-3 sm:mx-0">
                           <DialogHeader>
-                            <DialogTitle>Cambiar Color - {product.name}</DialogTitle>
+                            <DialogTitle className="text-sm sm:text-base">Cambiar Color - {product.name}</DialogTitle>
                           </DialogHeader>
-                          <div className="grid grid-cols-4 gap-3 py-4">
+                          <div className="grid grid-cols-4 gap-2 sm:gap-3 py-4">
                             {PRODUCT_COLORS.map((color) => (
                               <button
                                 key={color}
-                                className={`w-12 h-12 rounded-lg border-2 transition-all hover:scale-110 ${
+                                className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg border-2 transition-all hover:scale-110 ${
                                   product.color === color ? 'border-primary ring-2 ring-primary/20' : 'border-muted'
                                 }`}
                                 style={{ backgroundColor: color }}
@@ -248,8 +250,8 @@ export const ProductRegistry = ({ products, onAddProduct, onUpdateProduct, canEd
                     )}
                   </div>
                   
-                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4" />
+                  <div className="flex items-center space-x-2 text-xs sm:text-sm text-muted-foreground">
+                    <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
                     <span>Vida media: {product.halfLife}h</span>
                   </div>
 

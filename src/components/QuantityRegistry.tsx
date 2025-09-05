@@ -107,8 +107,8 @@ export const QuantityRegistry = ({ products, onAddQuantity, canEdit }: QuantityR
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Acceso de Solo Lectura</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-sm sm:text-base">Acceso de Solo Lectura</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
             Actualmente tienes acceso de solo lectura. Contacta al administrador para obtener permisos de edición.
           </CardDescription>
         </CardHeader>
@@ -119,33 +119,33 @@ export const QuantityRegistry = ({ products, onAddQuantity, canEdit }: QuantityR
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <Plus className="h-5 w-5" />
+        <CardTitle className="flex items-center space-x-2 text-sm sm:text-base">
+          <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
           <span>Registrar Cantidad</span>
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-xs sm:text-sm">
           Registra una nueva cantidad de producto consumida.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">
-              <Label htmlFor="product">Producto</Label>
+              <Label htmlFor="product" className="text-xs sm:text-sm">Producto</Label>
               <Select value={selectedProductId} onValueChange={setSelectedProductId}>
-                <SelectTrigger>
+                <SelectTrigger className="text-sm">
                   <SelectValue placeholder="Selecciona un producto" />
                 </SelectTrigger>
                 <SelectContent>
                   {products.map((product) => (
-                    <SelectItem key={product.id} value={product.id}>
+                    <SelectItem key={product.id} value={product.id} className="text-sm">
                       <div className="flex items-center space-x-2">
                         <div
-                          className="w-3 h-3 rounded-full"
+                          className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0"
                           style={{ backgroundColor: product.color }}
                         />
-                        <span>{product.name}</span>
-                        <span className="text-muted-foreground">({product.halfLife}h)</span>
+                        <span className="truncate">{product.name}</span>
+                        <span className="text-muted-foreground text-xs">({product.halfLife}h)</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -154,7 +154,7 @@ export const QuantityRegistry = ({ products, onAddQuantity, canEdit }: QuantityR
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="amount">Cantidad (mg)</Label>
+              <Label htmlFor="amount" className="text-xs sm:text-sm">Cantidad (mg)</Label>
               <Input
                 id="amount"
                 type="number"
@@ -164,28 +164,31 @@ export const QuantityRegistry = ({ products, onAddQuantity, canEdit }: QuantityR
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="ej. 500"
                 disabled={isSubmitting}
+                className="text-sm"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">
-              <Label>Fecha (opcional)</Label>
+              <Label className="text-xs sm:text-sm">Fecha (opcional)</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-full justify-start text-left font-normal",
+                      "w-full justify-start text-left font-normal text-xs sm:text-sm",
                       !selectedDate && "text-muted-foreground"
                     )}
                     disabled={isSubmitting}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <CalendarIcon className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                     {selectedDate ? (
-                      format(selectedDate, "PPP", { locale: es })
+                      <span className="truncate">
+                        {format(selectedDate, "PPP", { locale: es })}
+                      </span>
                     ) : (
-                      <span>Selecciona fecha (hoy por defecto)</span>
+                      <span className="truncate">Selecciona fecha (hoy por defecto)</span>
                     )}
                   </Button>
                 </PopoverTrigger>
@@ -202,7 +205,7 @@ export const QuantityRegistry = ({ products, onAddQuantity, canEdit }: QuantityR
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="time">Hora (opcional)</Label>
+              <Label htmlFor="time" className="text-xs sm:text-sm">Hora (opcional)</Label>
               <Input
                 id="time"
                 type="time"
@@ -210,13 +213,14 @@ export const QuantityRegistry = ({ products, onAddQuantity, canEdit }: QuantityR
                 onChange={(e) => setSelectedTime(e.target.value)}
                 placeholder="Hora actual por defecto"
                 disabled={isSubmitting}
+                className="text-sm"
               />
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground p-3 bg-muted/30 rounded-md">
-            <Clock className="h-4 w-4" />
-            <span>
+          <div className="flex items-center space-x-2 text-xs sm:text-sm text-muted-foreground p-2 sm:p-3 bg-muted/30 rounded-md">
+            <Clock className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+            <span className="truncate">
               {selectedDate || selectedTime 
                 ? `Se registrará: ${selectedDate ? format(selectedDate, "dd/MM/yyyy", { locale: es }) : 'hoy'} a las ${selectedTime || 'hora actual'}`
                 : `Se registrará ahora: ${new Date().toLocaleString()}`
@@ -226,14 +230,14 @@ export const QuantityRegistry = ({ products, onAddQuantity, canEdit }: QuantityR
 
           <Button 
             type="submit" 
-            className="w-full" 
+            className="w-full text-sm" 
             disabled={isSubmitting || products.length === 0}
           >
             {isSubmitting ? 'Registrando...' : 'Registrar Cantidad'}
           </Button>
 
           {products.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center">
+            <p className="text-xs sm:text-sm text-muted-foreground text-center">
               Primero debes agregar al menos un producto en la pestaña "Productos".
             </p>
           )}
