@@ -112,6 +112,33 @@ export const MedicationDashboard = () => {
     setProducts(prev => [...prev, newProduct]);
   };
 
+  const updateProduct = async (productId: string, updates: Partial<Product>) => {
+    const { data, error } = await supabase
+      .from('products')
+      .update({
+        name: updates.name,
+        half_life: updates.halfLife,
+        color: updates.color
+      })
+      .eq('id', productId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating product:', error);
+      return;
+    }
+
+    const updatedProduct: Product = {
+      id: data.id,
+      name: data.name,
+      halfLife: Number(data.half_life),
+      color: data.color
+    };
+
+    setProducts(prev => prev.map(p => p.id === productId ? updatedProduct : p));
+  };
+
   const addQuantity = async (quantity: Omit<Quantity, 'id'>) => {
     const { data, error } = await supabase
       .from('quantities')
@@ -267,6 +294,7 @@ export const MedicationDashboard = () => {
                 <ProductRegistry 
                   products={products} 
                   onAddProduct={addProduct}
+                  onUpdateProduct={updateProduct}
                   canEdit={user?.canEdit ?? false}
                 />
               </CardContent>

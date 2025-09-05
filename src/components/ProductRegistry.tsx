@@ -4,7 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Clock, Package } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Plus, Clock, Package, Palette } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import type { Product } from './MedicationDashboard';
 
@@ -16,13 +17,43 @@ const PRODUCT_COLORS = [
 interface ProductRegistryProps {
   products: Product[];
   onAddProduct: (product: Omit<Product, 'id'>) => void;
+  onUpdateProduct: (productId: string, updates: Partial<Product>) => void;
   canEdit: boolean;
 }
 
-export const ProductRegistry = ({ products, onAddProduct, canEdit }: ProductRegistryProps) => {
+export const ProductRegistry = ({ products, onAddProduct, onUpdateProduct, canEdit }: ProductRegistryProps) => {
   const [name, setName] = useState('');
   const [halfLife, setHalfLife] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [colorDialogOpen, setColorDialogOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  const handleColorChange = async (productId: string, newColor: string) => {
+    if (!canEdit) {
+      toast({
+        title: "Acceso denegado",
+        description: "No tienes permisos para editar productos.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await onUpdateProduct(productId, { color: newColor });
+      toast({
+        title: "Color actualizado",
+        description: "El color del producto ha sido cambiado exitosamente.",
+      });
+      setColorDialogOpen(false);
+      setSelectedProduct(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Hubo un problema al actualizar el color.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -181,6 +212,40 @@ export const ProductRegistry = ({ products, onAddProduct, canEdit }: ProductRegi
                       />
                       <h3 className="font-medium">{product.name}</h3>
                     </div>
+                    {canEdit && (
+                      <Dialog open={colorDialogOpen && selectedProduct?.id === product.id} onOpenChange={(open) => {
+                        setColorDialogOpen(open);
+                        if (!open) setSelectedProduct(null);
+                      }}>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedProduct(product)}
+                            className="h-6 w-6 p-0"
+                          >
+                            <Palette className="h-3 w-3" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Cambiar Color - {product.name}</DialogTitle>
+                          </DialogHeader>
+                          <div className="grid grid-cols-4 gap-3 py-4">
+                            {PRODUCT_COLORS.map((color) => (
+                              <button
+                                key={color}
+                                className={`w-12 h-12 rounded-lg border-2 transition-all hover:scale-110 ${
+                                  product.color === color ? 'border-primary ring-2 ring-primary/20' : 'border-muted'
+                                }`}
+                                style={{ backgroundColor: color }}
+                                onClick={() => handleColorChange(product.id, color)}
+                              />
+                            ))}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    )}
                   </div>
                   
                   <div className="flex items-center space-x-2 text-sm text-muted-foreground">
