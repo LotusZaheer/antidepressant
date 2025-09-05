@@ -1,8 +1,16 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Clock, TrendingUp, Info } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Clock, TrendingUp, Info, CalendarIcon, Settings } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import type { Product, Quantity } from './MedicationDashboard';
 
 interface ConcentrationChartProps {
@@ -22,25 +30,91 @@ const calculateConcentration = (initialAmount: number, halfLife: number, timeEla
   return initialAmount * Math.exp(-lambda * timeElapsed);
 };
 
+type TimeRangePreset = 'day' | 'week' | 'month' | 'custom' | 'default';
+
 export const ConcentrationChart = ({ products, quantities }: ConcentrationChartProps) => {
+  const [timeRange, setTimeRange] = useState<TimeRangePreset>('default');
+  const [customStartDate, setCustomStartDate] = useState<Date>();
+  const [customEndDate, setCustomEndDate] = useState<Date>();
+  const [customStartTime, setCustomStartTime] = useState('00:00');
+  const [customEndTime, setCustomEndTime] = useState('23:59');
+  const [startDateOpen, setStartDateOpen] = useState(false);
+  const [endDateOpen, setEndDateOpen] = useState(false);
+
+  const getTimeRange = () => {
+    const now = new Date();
+    
+    switch (timeRange) {
+      case 'day':
+        return {
+          start: new Date(now.getTime() - 12 * 60 * 60 * 1000), // 12 hours ago
+          end: new Date(now.getTime() + 12 * 60 * 60 * 1000)   // 12 hours ahead
+        };
+      case 'week':
+        return {
+          start: new Date(now.getTime() - 3.5 * 24 * 60 * 60 * 1000), // 3.5 days ago
+          end: new Date(now.getTime() + 3.5 * 24 * 60 * 60 * 1000)   // 3.5 days ahead
+        };
+      case 'month':
+        return {
+          start: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000), // 15 days ago
+          end: new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000)   // 15 days ahead
+        };
+      case 'custom':
+        if (customStartDate && customEndDate) {
+          const [startHour, startMinute] = customStartTime.split(':').map(Number);
+          const [endHour, endMinute] = customEndTime.split(':').map(Number);
+          
+          const start = new Date(customStartDate);
+          start.setHours(startHour, startMinute, 0, 0);
+          
+          const end = new Date(customEndDate);
+          end.setHours(endHour, endMinute, 59, 999);
+          
+          return { start, end };
+        }
+        // Fallback to default if custom dates not set
+        return {
+          start: new Date(now.getTime() - 3.5 * 24 * 60 * 60 * 1000),
+          end: new Date(now.getTime() + 3.5 * 24 * 60 * 60 * 1000)
+        };
+      default: // 'default'
+        return {
+          start: new Date(now.getTime() - 3.5 * 24 * 60 * 60 * 1000), // 3.5 days ago
+          end: new Date(now.getTime() + 3.5 * 24 * 60 * 60 * 1000)   // 3.5 days ahead
+        };
+    }
+  };
+
   const chartData = useMemo(() => {
     if (products.length === 0 || quantities.length === 0) return [];
 
-    // Create time points for the last 24 hours and next 48 hours
-    const now = Date.now();
+    const { start, end } = getTimeRange();
+    const totalHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+    
+    // Determine interval based on total hours
+    let intervalHours: number;
+    if (totalHours <= 24) {
+      intervalHours = 1; // 1 hour intervals for day view
+    } else if (totalHours <= 168) {
+      intervalHours = 2; // 2 hour intervals for week view
+    } else {
+      intervalHours = 6; // 6 hour intervals for month view
+    }
+
     const dataPoints: ChartDataPoint[] = [];
     
-    // Generate time points every 2 hours for 72 hours total (24 past + 48 future)
-    for (let i = -24; i <= 48; i += 2) {
-      const timePoint = now + (i * 60 * 60 * 1000); // i hours from now
-      const timeLabel = new Date(timePoint).toLocaleDateString('es-ES', {
+    // Generate time points
+    for (let time = start.getTime(); time <= end.getTime(); time += intervalHours * 60 * 60 * 1000) {
+      const timeLabel = new Date(time).toLocaleDateString('es-ES', {
         month: 'short',
         day: 'numeric',
-        hour: '2-digit'
+        hour: '2-digit',
+        minute: totalHours <= 24 ? '2-digit' : undefined
       });
 
       const dataPoint: ChartDataPoint = {
-        time: timePoint,
+        time,
         timeLabel
       };
 
@@ -52,7 +126,7 @@ export const ConcentrationChart = ({ products, quantities }: ConcentrationChartP
         // Sum concentrations from all quantities of this product
         productQuantities.forEach(quantity => {
           const quantityTime = quantity.timestamp.getTime();
-          const hoursElapsed = (timePoint - quantityTime) / (1000 * 60 * 60);
+          const hoursElapsed = (time - quantityTime) / (1000 * 60 * 60);
           
           if (hoursElapsed >= 0) {
             // Only calculate if the quantity has already been taken at this time point
@@ -67,7 +141,7 @@ export const ConcentrationChart = ({ products, quantities }: ConcentrationChartP
     }
 
     return dataPoints;
-  }, [products, quantities]);
+  }, [products, quantities, timeRange, customStartDate, customEndDate, customStartTime, customEndTime]);
 
   const formatTooltip = (value: any, name: string) => {
     const product = products.find(m => m.id === name);
@@ -100,6 +174,135 @@ export const ConcentrationChart = ({ products, quantities }: ConcentrationChartP
 
   return (
     <div className="space-y-6">
+      {/* Time Range Controls */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center space-x-2 text-base">
+            <Settings className="h-4 w-4" />
+            <span>Rango de Tiempo</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={timeRange === 'day' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setTimeRange('day')}
+            >
+              1 Día
+            </Button>
+            <Button
+              variant={timeRange === 'week' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setTimeRange('week')}
+            >
+              1 Semana
+            </Button>
+            <Button
+              variant={timeRange === 'month' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setTimeRange('month')}
+            >
+              1 Mes
+            </Button>
+            <Button
+              variant={timeRange === 'default' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setTimeRange('default')}
+            >
+              Por Defecto (3.5 días)
+            </Button>
+            <Button
+              variant={timeRange === 'custom' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setTimeRange('custom')}
+            >
+              Personalizado
+            </Button>
+          </div>
+
+          {timeRange === 'custom' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/30">
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Fecha y Hora de Inicio</Label>
+                <div className="flex gap-2">
+                  <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "justify-start text-left font-normal flex-1",
+                          !customStartDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {customStartDate ? format(customStartDate, "PPP") : "Seleccionar fecha"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={customStartDate}
+                        onSelect={(date) => {
+                          setCustomStartDate(date);
+                          setStartDateOpen(false);
+                        }}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <Input
+                    type="time"
+                    value={customStartTime}
+                    onChange={(e) => setCustomStartTime(e.target.value)}
+                    className="w-32"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Fecha y Hora de Fin</Label>
+                <div className="flex gap-2">
+                  <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "justify-start text-left font-normal flex-1",
+                          !customEndDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {customEndDate ? format(customEndDate, "PPP") : "Seleccionar fecha"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={customEndDate}
+                        onSelect={(date) => {
+                          setCustomEndDate(date);
+                          setEndDateOpen(false);
+                        }}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <Input
+                    type="time"
+                    value={customEndTime}
+                    onChange={(e) => setCustomEndTime(e.target.value)}
+                    className="w-32"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Product Legend */}
       <div className="flex flex-wrap gap-2">
         {products.map(product => {
@@ -184,7 +387,7 @@ export const ConcentrationChart = ({ products, quantities }: ConcentrationChartP
           <CardDescription>
             Este gráfico muestra la concentración estimada de productos en el cuerpo basada en el modelo de vida media. 
             Los cálculos utilizan una función exponencial de decaimiento: C(t) = C₀ × e^(-λt), donde λ = ln(2)/t½. 
-            La visualización abarca 24 horas pasadas y 48 horas futuras desde el momento actual.
+            El rango por defecto muestra 3.5 días hacia atrás y 3.5 días hacia adelante desde el momento actual.
           </CardDescription>
         </CardContent>
       </Card>
