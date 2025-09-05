@@ -40,6 +40,24 @@ export const ConcentrationChart = ({ products, quantities }: ConcentrationChartP
   const [customEndTime, setCustomEndTime] = useState('23:59');
   const [startDateOpen, setStartDateOpen] = useState(false);
   const [endDateOpen, setEndDateOpen] = useState(false);
+  const [visibleProducts, setVisibleProducts] = useState<Set<string>>(new Set());
+
+  // Initialize visible products when products change
+  useMemo(() => {
+    setVisibleProducts(new Set(products.map(p => p.id)));
+  }, [products]);
+
+  const toggleProductVisibility = (productId: string) => {
+    setVisibleProducts(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(productId)) {
+        newSet.delete(productId);
+      } else {
+        newSet.add(productId);
+      }
+      return newSet;
+    });
+  };
 
   const getTimeRange = () => {
     const now = new Date();
@@ -297,25 +315,37 @@ export const ConcentrationChart = ({ products, quantities }: ConcentrationChartP
       </Card>
 
       {/* Product Legend */}
-      <div className="flex flex-wrap gap-2">
-        {products.map(product => {
-          const productQuantities = quantities.filter(q => q.productId === product.id);
-          const totalQuantities = productQuantities.length;
-          const totalAmount = productQuantities.reduce((sum, quantity) => sum + quantity.amount, 0);
-          
-          return (
-            <Badge key={product.id} variant="outline" className="flex items-center space-x-2 px-3 py-2">
-              <div
-                className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: product.color }}
-              />
-              <span className="font-medium">{product.name}</span>
-              <span className="text-muted-foreground">
-                ({totalQuantities} cantidades, {totalAmount}mg total)
-              </span>
-            </Badge>
-          );
-        })}
+      <div className="space-y-2">
+        <h4 className="text-sm font-medium">Productos (Click para mostrar/ocultar)</h4>
+        <div className="flex flex-wrap gap-2">
+          {products.map(product => {
+            const productQuantities = quantities.filter(q => q.productId === product.id);
+            const totalQuantities = productQuantities.length;
+            const totalAmount = productQuantities.reduce((sum, quantity) => sum + quantity.amount, 0);
+            const isVisible = visibleProducts.has(product.id);
+            
+            return (
+              <Badge 
+                key={product.id} 
+                variant={isVisible ? "default" : "secondary"} 
+                className={cn(
+                  "flex items-center space-x-2 px-3 py-2 cursor-pointer transition-all",
+                  !isVisible && "opacity-50"
+                )}
+                onClick={() => toggleProductVisibility(product.id)}
+              >
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: isVisible ? product.color : '#888' }}
+                />
+                <span className="font-medium">{product.name}</span>
+                <span className="text-xs opacity-75">
+                  ({totalQuantities} cantidades, {totalAmount}mg total)
+                </span>
+              </Badge>
+            );
+          })}
+        </div>
       </div>
 
       {/* Chart */}
@@ -352,7 +382,7 @@ export const ConcentrationChart = ({ products, quantities }: ConcentrationChartP
               }}
             />
             <Legend />
-            {products.map(product => (
+            {products.filter(product => visibleProducts.has(product.id)).map(product => (
               <Line
                 key={product.id}
                 type="monotone"
