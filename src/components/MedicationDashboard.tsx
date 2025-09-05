@@ -5,23 +5,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { useAuth } from './AuthProvider';
 import { LoginForm } from './LoginForm';
-import { MedicationRegistry } from './MedicationRegistry';
-import { DoseRegistry } from './DoseRegistry';
+import { ProductRegistry } from './ProductRegistry';
+import { QuantityRegistry } from './QuantityRegistry';
 import { ConcentrationChart } from './ConcentrationChart';
 import { UserSettings } from './UserSettings';
 import { LogOut, Pill, Plus, BarChart3, Settings, LogIn } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
-export interface Medication {
+export interface Product {
   id: string;
   name: string;
   halfLife: number; // in hours
   color: string;
 }
 
-export interface Dose {
+export interface Quantity {
   id: string;
-  medicationId: string;
+  productId: string;
   amount: number; // in mg
   timestamp: Date;
 }
@@ -29,113 +29,113 @@ export interface Dose {
 
 export const MedicationDashboard = () => {
   const { user, logout, loading } = useAuth();
-  const [medications, setMedications] = useState<Medication[]>([]);
-  const [doses, setDoses] = useState<Dose[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [quantities, setQuantities] = useState<Quantity[]>([]);
   const [activeTab, setActiveTab] = useState('chart');
   const [loginOpen, setLoginOpen] = useState(false);
 
-  // Load medications from Supabase
+  // Load products from Supabase
   useEffect(() => {
-    const loadMedications = async () => {
+    const loadProducts = async () => {
       const { data, error } = await supabase
-        .from('medications')
+        .from('products')
         .select('*')
         .order('created_at', { ascending: true });
       
       if (error) {
-        console.error('Error loading medications:', error);
+        console.error('Error loading products:', error);
         return;
       }
       
-      const formattedMedications: Medication[] = data.map(med => ({
-        id: med.id,
-        name: med.name,
-        halfLife: Number(med.half_life),
-        color: med.color
+      const formattedProducts: Product[] = data.map(prod => ({
+        id: prod.id,
+        name: prod.name,
+        halfLife: Number(prod.half_life),
+        color: prod.color
       }));
       
-      setMedications(formattedMedications);
+      setProducts(formattedProducts);
     };
 
-    loadMedications();
+    loadProducts();
   }, []);
 
-  // Load doses from Supabase
+  // Load quantities from Supabase
   useEffect(() => {
-    const loadDoses = async () => {
+    const loadQuantities = async () => {
       const { data, error } = await supabase
-        .from('doses')
-        .select('*, medications(name)')
+        .from('quantities')
+        .select('*, products(name)')
         .order('timestamp', { ascending: false });
       
       if (error) {
-        console.error('Error loading doses:', error);
+        console.error('Error loading quantities:', error);
         return;
       }
       
-      const formattedDoses: Dose[] = data.map(dose => ({
-        id: dose.id,
-        medicationId: dose.medication_id,
-        amount: Number(dose.amount),
-        timestamp: new Date(dose.timestamp)
+      const formattedQuantities: Quantity[] = data.map(qty => ({
+        id: qty.id,
+        productId: qty.product_id,
+        amount: Number(qty.amount),
+        timestamp: new Date(qty.timestamp)
       }));
       
-      setDoses(formattedDoses);
+      setQuantities(formattedQuantities);
     };
 
-    loadDoses();
+    loadQuantities();
   }, []);
 
-  const addMedication = async (medication: Omit<Medication, 'id'>) => {
+  const addProduct = async (product: Omit<Product, 'id'>) => {
     const { data, error } = await supabase
-      .from('medications')
+      .from('products')
       .insert({
-        name: medication.name,
-        half_life: medication.halfLife,
-        color: medication.color
+        name: product.name,
+        half_life: product.halfLife,
+        color: product.color
       })
       .select()
       .single();
 
     if (error) {
-      console.error('Error adding medication:', error);
+      console.error('Error adding product:', error);
       return;
     }
 
-    const newMedication: Medication = {
+    const newProduct: Product = {
       id: data.id,
       name: data.name,
       halfLife: Number(data.half_life),
       color: data.color
     };
 
-    setMedications(prev => [...prev, newMedication]);
+    setProducts(prev => [...prev, newProduct]);
   };
 
-  const addDose = async (dose: Omit<Dose, 'id'>) => {
+  const addQuantity = async (quantity: Omit<Quantity, 'id'>) => {
     const { data, error } = await supabase
-      .from('doses')
+      .from('quantities')
       .insert({
-        medication_id: dose.medicationId,
-        amount: dose.amount,
-        timestamp: dose.timestamp.toISOString()
+        product_id: quantity.productId,
+        amount: quantity.amount,
+        timestamp: quantity.timestamp.toISOString()
       })
       .select()
       .single();
 
     if (error) {
-      console.error('Error adding dose:', error);
+      console.error('Error adding quantity:', error);
       return;
     }
 
-    const newDose: Dose = {
+    const newQuantity: Quantity = {
       id: data.id,
-      medicationId: data.medication_id,
+      productId: data.product_id,
       amount: Number(data.amount),
       timestamp: new Date(data.timestamp)
     };
 
-    setDoses(prev => [newDose, ...prev]);
+    setQuantities(prev => [newQuantity, ...prev]);
   };
 
   if (loading) {
@@ -161,7 +161,7 @@ export const MedicationDashboard = () => {
               <Pill className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-primary">Sistema de Medicamentos</h1>
+              <h1 className="text-xl font-bold text-primary">Sistema de Productos</h1>
               <p className="text-sm text-muted-foreground">
                 {user?.canEdit ? 'Administrador' : 'Visitante'} - Seguimiento de concentración
               </p>
@@ -203,15 +203,15 @@ export const MedicationDashboard = () => {
               <BarChart3 className="h-4 w-4" />
               <span>Gráfica</span>
             </TabsTrigger>
-            <TabsTrigger value="medications" className="flex items-center space-x-2">
+            <TabsTrigger value="products" className="flex items-center space-x-2">
               <Pill className="h-4 w-4" />
-              <span>Medicamentos</span>
+              <span>Productos</span>
             </TabsTrigger>
             {user && (
               <>
-                <TabsTrigger value="doses" className="flex items-center space-x-2">
+                <TabsTrigger value="quantities" className="flex items-center space-x-2">
                   <Plus className="h-4 w-4" />
-                  <span>Registrar Dosis</span>
+                  <span>Registrar Cantidad</span>
                 </TabsTrigger>
                 <TabsTrigger value="settings" className="flex items-center space-x-2">
                   <Settings className="h-4 w-4" />
@@ -224,30 +224,30 @@ export const MedicationDashboard = () => {
           <TabsContent value="chart">
             <Card className="shadow-medical">
               <CardHeader>
-                <CardTitle>Concentración de Medicamentos</CardTitle>
+                <CardTitle>Concentración de Productos</CardTitle>
                 <CardDescription>
-                  Visualización de la concentración en el cuerpo basada en vida media y dosis
+                  Visualización de la concentración en el cuerpo basada en vida media y cantidades
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ConcentrationChart medications={medications} doses={doses} />
+                <ConcentrationChart products={products} quantities={quantities} />
               </CardContent>
             </Card>
           </TabsContent>
 
           {user && (
-            <TabsContent value="doses">
+            <TabsContent value="quantities">
               <Card className="shadow-medical">
                 <CardHeader>
-                  <CardTitle>Registrar Nueva Dosis</CardTitle>
+                  <CardTitle>Registrar Nueva Cantidad</CardTitle>
                   <CardDescription>
-                    Selecciona un medicamento e ingresa la cantidad
+                    Selecciona un producto e ingresa la cantidad
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <DoseRegistry 
-                    medications={medications} 
-                    onAddDose={addDose}
+                  <QuantityRegistry 
+                    products={products} 
+                    onAddQuantity={addQuantity}
                     canEdit={user?.canEdit ?? false}
                   />
                 </CardContent>
@@ -255,18 +255,18 @@ export const MedicationDashboard = () => {
             </TabsContent>
           )}
 
-          <TabsContent value="medications">
+          <TabsContent value="products">
             <Card className="shadow-medical">
               <CardHeader>
-                <CardTitle>Administrar Medicamentos</CardTitle>
+                <CardTitle>Administrar Productos</CardTitle>
                 <CardDescription>
-                  Lista de medicamentos y opción para agregar nuevos
+                  Lista de productos y opción para agregar nuevos
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <MedicationRegistry 
-                  medications={medications} 
-                  onAddMedication={addMedication}
+                <ProductRegistry 
+                  products={products} 
+                  onAddProduct={addProduct}
                   canEdit={user?.canEdit ?? false}
                 />
               </CardContent>

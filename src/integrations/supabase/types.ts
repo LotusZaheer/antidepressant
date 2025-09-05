@@ -14,39 +14,7 @@ export type Database = {
   }
   public: {
     Tables: {
-      doses: {
-        Row: {
-          amount: number
-          created_at: string
-          id: string
-          medication_id: string
-          timestamp: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          id?: string
-          medication_id: string
-          timestamp?: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          id?: string
-          medication_id?: string
-          timestamp?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "doses_medication_id_fkey"
-            columns: ["medication_id"]
-            isOneToOne: false
-            referencedRelation: "medications"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      medications: {
+      products: {
         Row: {
           color: string
           created_at: string
@@ -99,6 +67,38 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      quantities: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          product_id: string
+          timestamp: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          product_id: string
+          timestamp?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          product_id?: string
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doses_medication_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

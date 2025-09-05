@@ -1,127 +1,121 @@
 import { useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { Medication, Dose } from './MedicationDashboard';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Clock, TrendingUp, Info } from 'lucide-react';
+import type { Product, Quantity } from './MedicationDashboard';
 
 interface ConcentrationChartProps {
-  medications: Medication[];
-  doses: Dose[];
+  products: Product[];
+  quantities: Quantity[];
 }
 
 interface ChartDataPoint {
-  time: number; // hours from now
+  time: number;
   timeLabel: string;
-  [medicationId: string]: number | string;
+  [productId: string]: number | string;
 }
 
-// Calculate concentration based on exponential decay: C(t) = C0 * e^(-λt)
-// where λ = ln(2) / half-life
-const calculateConcentration = (initialDose: number, halfLife: number, timeElapsed: number): number => {
-  const lambda = Math.log(2) / halfLife;
-  return initialDose * Math.exp(-lambda * timeElapsed);
+// Helper function to calculate concentration based on exponential decay (half-life model)
+const calculateConcentration = (initialAmount: number, halfLife: number, timeElapsed: number): number => {
+  const lambda = Math.log(2) / halfLife; // decay constant
+  return initialAmount * Math.exp(-lambda * timeElapsed);
 };
 
-export const ConcentrationChart = ({ medications, doses }: ConcentrationChartProps) => {
+export const ConcentrationChart = ({ products, quantities }: ConcentrationChartProps) => {
   const chartData = useMemo(() => {
-    if (medications.length === 0 || doses.length === 0) return [];
+    if (products.length === 0 || quantities.length === 0) return [];
 
+    // Create time points for the last 24 hours and next 48 hours
     const now = Date.now();
-    const hoursBack = 24; // Show 24 hours of history
-    const hoursForward = 48; // Show 48 hours of future projection
-    const dataPoints = 100; // Number of data points
+    const dataPoints: ChartDataPoint[] = [];
     
-    const data: ChartDataPoint[] = [];
+    // Generate time points every 2 hours for 72 hours total (24 past + 48 future)
+    for (let i = -24; i <= 48; i += 2) {
+      const timePoint = now + (i * 60 * 60 * 1000); // i hours from now
+      const timeLabel = new Date(timePoint).toLocaleDateString('es-ES', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit'
+      });
 
-    // Generate time points from -hoursBack to +hoursForward
-    for (let i = 0; i <= dataPoints; i++) {
-      const timeFromNow = (i / dataPoints) * (hoursBack + hoursForward) - hoursBack;
-      const timePoint = now + timeFromNow * 60 * 60 * 1000;
-      
       const dataPoint: ChartDataPoint = {
-        time: timeFromNow,
-        timeLabel: timeFromNow === 0 ? 'Ahora' : 
-                  timeFromNow > 0 ? `+${Math.round(timeFromNow)}h` : 
-                  `${Math.round(timeFromNow)}h`
+        time: timePoint,
+        timeLabel
       };
 
-      // Calculate concentration for each medication
-      medications.forEach(medication => {
-        const medicationDoses = doses.filter(d => d.medicationId === medication.id);
+      // Calculate concentration for each product
+      products.forEach(product => {
+        const productQuantities = quantities.filter(q => q.productId === product.id);
         let totalConcentration = 0;
 
-        medicationDoses.forEach(dose => {
-          const doseTime = dose.timestamp.getTime();
-          const hoursElapsed = (timePoint - doseTime) / (1000 * 60 * 60);
+        // Sum concentrations from all quantities of this product
+        productQuantities.forEach(quantity => {
+          const quantityTime = quantity.timestamp.getTime();
+          const hoursElapsed = (timePoint - quantityTime) / (1000 * 60 * 60);
           
           if (hoursElapsed >= 0) {
-            // Only calculate if the dose has already been taken at this time point
-            totalConcentration += calculateConcentration(dose.amount, medication.halfLife, hoursElapsed);
+            // Only calculate if the quantity has already been taken at this time point
+            totalConcentration += calculateConcentration(quantity.amount, product.halfLife, hoursElapsed);
           }
         });
 
-        dataPoint[medication.id] = Math.max(0, totalConcentration);
+        dataPoint[product.id] = Math.max(0, totalConcentration);
       });
 
-      data.push(dataPoint);
+      dataPoints.push(dataPoint);
     }
 
-    return data;
-  }, [medications, doses]);
+    return dataPoints;
+  }, [products, quantities]);
 
   const formatTooltip = (value: any, name: string) => {
-    const medication = medications.find(m => m.id === name);
-    if (medication && typeof value === 'number') {
-      return [`${value.toFixed(2)} mg`, medication.name];
+    const product = products.find(m => m.id === name);
+    if (product && typeof value === 'number') {
+      return [`${value.toFixed(2)} mg`, product.name];
     }
     return [value, name];
   };
 
-  const formatXAxisLabel = (value: number) => {
-    if (value === 0) return 'Ahora';
-    if (value > 0) return `+${Math.round(value)}h`;
-    return `${Math.round(value)}h`;
+  const formatXAxisLabel = (tickItem: string) => {
+    return tickItem;
   };
 
-  if (medications.length === 0 || doses.length === 0) {
+  if (products.length === 0 || quantities.length === 0) {
     return (
-      <Card className="p-8 text-center">
-        <div className="space-y-4">
-          <div className="w-16 h-16 mx-auto rounded-full bg-muted flex items-center justify-center">
-            <span className="text-2xl">📊</span>
-          </div>
-          <div>
-            <h3 className="font-medium text-lg">No hay datos para mostrar</h3>
-            <p className="text-muted-foreground">
-              {medications.length === 0 
-                ? "Agrega medicamentos y registra dosis para ver la gráfica de concentración"
-                : "Registra algunas dosis para ver la gráfica de concentración"
-              }
-            </p>
-          </div>
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+          <TrendingUp className="h-8 w-8 text-muted-foreground" />
         </div>
-      </Card>
+        <h3 className="text-lg font-medium mb-2">No hay datos para mostrar</h3>
+        <p className="text-muted-foreground mb-4">
+          {products.length === 0 
+            ? 'Agrega productos en la pestaña "Productos" para comenzar.' 
+            : 'Registra cantidades en la pestaña "Registrar Cantidad" para ver la gráfica.'
+          }
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {/* Legend */}
-      <div className="flex flex-wrap gap-3">
-        {medications.map(medication => {
-          const medicationDoses = doses.filter(d => d.medicationId === medication.id);
-          const totalDoses = medicationDoses.length;
-          const totalAmount = medicationDoses.reduce((sum, dose) => sum + dose.amount, 0);
+    <div className="space-y-6">
+      {/* Product Legend */}
+      <div className="flex flex-wrap gap-2">
+        {products.map(product => {
+          const productQuantities = quantities.filter(q => q.productId === product.id);
+          const totalQuantities = productQuantities.length;
+          const totalAmount = productQuantities.reduce((sum, quantity) => sum + quantity.amount, 0);
           
           return (
-            <Badge key={medication.id} variant="outline" className="flex items-center space-x-2 px-3 py-2">
-              <div 
-                className="w-3 h-3 rounded-full" 
-                style={{ backgroundColor: medication.color }}
+            <Badge key={product.id} variant="outline" className="flex items-center space-x-2 px-3 py-2">
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: product.color }}
               />
-              <span className="font-medium">{medication.name}</span>
+              <span className="font-medium">{product.name}</span>
               <span className="text-muted-foreground">
-                ({totalDoses} dosis, {totalAmount}mg total)
+                ({totalQuantities} cantidades, {totalAmount}mg total)
               </span>
             </Badge>
           );
@@ -129,24 +123,31 @@ export const ConcentrationChart = ({ medications, doses }: ConcentrationChartPro
       </div>
 
       {/* Chart */}
-      <div className="h-96 w-full">
+      <div className="h-96">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+          <LineChart
+            data={chartData}
+            margin={{
+              top: 5,
+              right: 30,
+              left: 20,
+              bottom: 25,
+            }}
+          >
+            <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
             <XAxis 
-              dataKey="time" 
+              dataKey="timeLabel" 
+              tick={{ fontSize: 12 }}
               tickFormatter={formatXAxisLabel}
-              stroke="hsl(var(--foreground))"
-              fontSize={12}
+              interval="preserveStartEnd"
             />
             <YAxis 
+              tick={{ fontSize: 12 }}
               label={{ value: 'Concentración (mg)', angle: -90, position: 'insideLeft' }}
-              stroke="hsl(var(--foreground))"
-              fontSize={12}
             />
             <Tooltip 
               formatter={formatTooltip}
-              labelFormatter={(value) => `Tiempo: ${formatXAxisLabel(Number(value))}`}
+              labelClassName="text-foreground"
               contentStyle={{
                 backgroundColor: 'hsl(var(--card))',
                 border: '1px solid hsl(var(--border))',
@@ -155,33 +156,37 @@ export const ConcentrationChart = ({ medications, doses }: ConcentrationChartPro
               }}
             />
             <Legend />
-            {medications.map(medication => (
+            {products.map(product => (
               <Line
-                key={medication.id}
+                key={product.id}
                 type="monotone"
-                dataKey={medication.id}
-                stroke={medication.color}
+                dataKey={product.id}
+                stroke={product.color}
                 strokeWidth={2}
-                dot={{ fill: medication.color, strokeWidth: 0, r: 3 }}
-                activeDot={{ r: 5, stroke: medication.color, strokeWidth: 2 }}
-                name={medication.name}
+                dot={{ fill: product.color, strokeWidth: 0, r: 3 }}
+                activeDot={{ r: 5, stroke: product.color, strokeWidth: 2 }}
+                name={product.name}
               />
             ))}
           </LineChart>
         </ResponsiveContainer>
       </div>
 
-      {/* Info */}
-      <Card className="p-4 bg-accent/50">
-        <div className="space-y-2">
-          <p className="text-sm font-medium">Información de la gráfica:</p>
-          <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• La concentración se calcula usando la fórmula: C(t) = C₀ × e^(-λt)</li>
-            <li>• λ (constante de eliminación) = ln(2) / vida media</li>
-            <li>• Se muestra 24h de historial y 48h de proyección</li>
-            <li>• Las concentraciones de múltiples dosis del mismo medicamento se suman</li>
-          </ul>
-        </div>
+      {/* Information Card */}
+      <Card className="bg-muted/30">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center space-x-2 text-base">
+            <Info className="h-4 w-4" />
+            <span>Información del Cálculo</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <CardDescription>
+            Este gráfico muestra la concentración estimada de productos en el cuerpo basada en el modelo de vida media. 
+            Los cálculos utilizan una función exponencial de decaimiento: C(t) = C₀ × e^(-λt), donde λ = ln(2)/t½. 
+            La visualización abarca 24 horas pasadas y 48 horas futuras desde el momento actual.
+          </CardDescription>
+        </CardContent>
       </Card>
     </div>
   );
